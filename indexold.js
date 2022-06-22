@@ -55,9 +55,9 @@ client.on('message', message => {
                     const marketSaved = marketList[index];
                     find.getMarket(marketSaved.id).then(marketFind => {
                         if(!marketFind || !marketFind.name){
-                            message.reply(`Loja ${marketSaved.name} não foi mais encontrada, removendo da listagem de busca`);
-                            console.log("Market not found, removing from list");
-                            removeMarketById(marketSaved.id);
+                            //message.reply(`Loja ${marketSaved.name} não foi mais encontrada`);
+                            console.log("Market not found, avoiding item comparision");
+                            //removeMarketById(marketSaved.id);
                         } else {
                             console.log("Market found, initializing items comparision");
                             if(marketSaved.items.total > marketFind.items.total){
