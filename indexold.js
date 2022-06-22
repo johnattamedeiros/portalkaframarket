@@ -186,8 +186,6 @@ client.on('message', message => {
                 marketListMessage = marketListMessage + ` ----------------------------------------------------------------- \r\n`;
 
                 message.reply(marketListMessage);
-            } else {
-                message.reply(`Loja não monitorada, tente adiciona-la a lista`);
             }
         });
         
