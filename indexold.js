@@ -11,10 +11,13 @@ let task = {};
 let marketList = [];
 
 let commandList = [{command:"addmarket",description:"Adiciona uma loja ao monitoramento. Exemplo: !addmarket 123"},
+{command:"addmarketlist",description:"Adiciona uma lista de lojas ao monitoramento. Exemplo: !addmarket 123,1345,1111,444"},
 {command:"removemarket",description:"Remove uma loja do monitoramento. Exemplo: !removemarket 123"},
 {command:"listmarket",description:"Lista todas as lojas em monitoramento. Exemplo: !listmarket"},
 {command:"showmarket",description:"Apresenta todos os dados da loja. Exemplo !showmarket 1234"},
-{command:"clearmarketlist",description:"Apaga todas as lojas do monitoramento. Exemplo: !clearmarketlist"}
+{command:"clearmarketlist",description:"Apaga todas as lojas do monitoramento. Exemplo: !clearmarketlist"},
+{command:"cron",description:"Inicia o monitoramento. Exemplo: !cron"},
+{command:"cronstop",description:"Pausa o monitoramento. Exemplo: !cronstop"}
 ];
 
 const prefix = "!";
@@ -33,6 +36,7 @@ client.on('message', message => {
           if(market.id === idMarket){
             marketList.splice(i, 1);
             message.reply(`Removendo mercado ${idMarket} da lista de monitoramento.`);
+            console.log("Removing market monitoring");
           }
         }
     }
@@ -42,17 +46,22 @@ client.on('message', message => {
     }
 
     if (args[0].toLowerCase() === "cron") {
-        message.reply("Captura iniciada");
-        task = cron.schedule("*/10 * * * * *", () => {
+        message.reply("Captura iniciada 30 em 30 segundos");
+        task = cron.schedule("*/30 * * * * *", () => {
+            console.log("Running cronjob");
             if(marketList.length > 0){
+                console.log("Initializing market monitoring");
                 for (let index = 0; index < marketList.length; index++) {
                     const marketSaved = marketList[index];
                     find.getMarket(marketSaved.id).then(marketFind => {
-                        if(!marketFind||!marketFind.name){
+                        if(!marketFind || !marketFind.name){
                             message.reply(`Loja ${marketSaved.name} não foi mais encontrada, removendo da listagem de busca`);
+                            console.log("Market not found, removing from list");
                             removeMarketById(marketSaved.id);
                         } else {
+                            console.log("Market found, initializing items comparision");
                             if(marketSaved.items.total > marketFind.items.total){
+                                console.log("Item selled, finding selled item");
                                 let selledList = [];
                                 itemsSaved = marketSaved.items.items;
                                 newItems = marketFind.items.items;
@@ -75,15 +84,17 @@ client.on('message', message => {
                                         selledList.push(selled);
                                     }
                                 });
-
+                                console.log("Sending item selled message");
                                 let messageSelled = `Item vendido!\r\nLoja: ${marketSaved.name}\r\nPersonagem: ${marketSaved.charName}\r\n`;
                                 messageSelled = messageSelled + ` ----------------- Itens Vendidos ----------------- \r\n`;
                                 selledList.forEach(selledItem => {
                                     messageSelled = messageSelled + ` Nome: ${selledItem.name} - Quantidade: ${selledItem.quantity} \r\n`;
                                 });
-                                messageSelled = messageSelled + ` -------------------------------------------------- \r\n`;
+                                messageSelled = messageSelled + ` ----------------------------------------------------------- \r\n`;
                                 message.reply(messageSelled);
                                 marketList[index] = marketFind;
+                            } else {
+                                console.log("Didnt have selled items"); 
                             }
                         }
                     }).catch(error=>{
@@ -116,7 +127,33 @@ client.on('message', message => {
             }
             
         }).catch(error=>{
-            message.reply(`Erro ao tentar adicionar a loja, verifique se ela existe em https://www.kafraportal.com/oldtimes/vending/items/`);
+            message.reply(`Erro ao tentar adicionar a loja, verifique se ela existe em https://www.kafraportal.com/oldtimes/vending/items/ \r\n`);
+            message.reply( ` Erro não esperado, fale com administrador do sistema ` + error + `\r\n`);  
+        });
+    }
+
+    if (args[0].toLowerCase() === "addmarketlist") {
+
+        let listMarket = args[1].split(',');
+        let marketListMessage = '';
+        
+        listMarket.forEach(idMarket => {
+            console.log(idMarket);
+            find.getMarket(idMarket).then(market => {
+                if(!market || !market.name){
+                    console.log("Market not found");
+                    message.reply( ` Erro ao tentar adicionar a loja ${idMarket}, verifique se ela existe em https://www.kafraportal.com/oldtimes/vending/items/ \r\n`);
+                } else {
+                    console.log("Market found");
+                    message.reply( `Loja encontrada id: ${market.id} - Loja: ${market.name} - Personagem: ${market.charName} \r\n Adicionando ao monitoramento a loja ${market.id}`);
+                    marketList.push(market);
+                }
+                
+            }).catch(error=>{
+                message.reply( ` Erro ao tentar adicionar a loja ${idMarket}, verifique se ela existe em https://www.kafraportal.com/oldtimes/vending/items/ \r\n`);  
+                message.reply( ` Erro não esperado, fale com administrador do sistema ` + error + `\r\n`);  
+            });
+            
         });
     }
 
