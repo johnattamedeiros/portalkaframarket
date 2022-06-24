@@ -65,16 +65,16 @@ client.on('message', message => {
                                 let selledList = [];
                                 itemsSaved = marketSaved.items.items;
                                 newItems = marketFind.items.items;
-                                
+                                let countShowSelled = 0;
                                 itemsSaved.forEach(saved => {
                                     let itemFound = false;
                                         newItems.forEach(newItem => {
                                             if(saved.name === newItem.name){
-                                                itemFound=true;
-                                                if(parseInt(saved.quantity)>parseInt(newItem.quantity)){
+                                                itemFound = true;
+                                                if(parseInt(saved.quantity) > parseInt(newItem.quantity)){
                                                     console.log("Item vendido");
                                                     let quantitySelled = parseInt(saved.quantity) - parseInt(newItem.quantity);
-                                                    let selled = {name:saved.name,quantity:quantitySelled};
+                                                    let selled = {name:saved.name, quantity:quantitySelled, value:saved.value};
                                                     selledList.push(selled);
                                                 }
                                             }
@@ -83,16 +83,20 @@ client.on('message', message => {
                                         let selled = {name:saved.name, quantity:saved.quantity};
                                         selledList.push(selled);
                                     }
+                                    countShowSelled = countShowSelled + 1;
+                                    if(countShowSelled === itemsSaved.length){
+                                        console.log("Sending item selled message");
+                                        let messageSelled = `Item vendido!\r\nLoja: ${marketSaved.name}\r\nPersonagem: ${marketSaved.charName}\r\n`;
+                                        messageSelled = messageSelled + ` ----------------- Itens Vendidos ----------------- \r\n`;
+                                        selledList.forEach(selledItem => {
+                                            messageSelled = messageSelled + ` Nome: ${selledItem.name} - Quantidade: ${selledItem.quantity} - Valor: ${selledItem.value} \r\n`;
+                                        });
+                                        messageSelled = messageSelled + ` ----------------------------------------------------------- \r\n`;
+                                        message.reply(messageSelled);
+                                        marketList[index] = marketFind;
+                                    }
                                 });
-                                console.log("Sending item selled message");
-                                let messageSelled = `Item vendido!\r\nLoja: ${marketSaved.name}\r\nPersonagem: ${marketSaved.charName}\r\n`;
-                                messageSelled = messageSelled + ` ----------------- Itens Vendidos ----------------- \r\n`;
-                                selledList.forEach(selledItem => {
-                                    messageSelled = messageSelled + ` Nome: ${selledItem.name} - Quantidade: ${selledItem.quantity} \r\n`;
-                                });
-                                messageSelled = messageSelled + ` ----------------------------------------------------------- \r\n`;
-                                message.reply(messageSelled);
-                                marketList[index] = marketFind;
+       
                             } else {
                                 console.log("Didnt have selled items"); 
                             }
